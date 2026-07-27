@@ -39,7 +39,9 @@ def monitorar_servicos():
         url = servico["url"]
         
         try:
-            resposta = requests.get(url, timeout=10)
+            # Adicionamos um cabeçalho para o TryHackMe não bloquear o bot por automação
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            resposta = requests.get(url, headers=headers, timeout=10)
             
             if resposta.status_code != 200:
                 print(f"[!] ALERTA: {nome} retornou erro {resposta.status_code}!")
