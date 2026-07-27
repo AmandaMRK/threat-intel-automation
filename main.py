@@ -1,4 +1,3 @@
-cat << 'EOF' > main.py
 import os
 import time
 import requests
@@ -70,4 +69,3 @@ if __name__ == "__main__":
     while True:
         monitorar_servicos()
         time.sleep(300)
-EOF
