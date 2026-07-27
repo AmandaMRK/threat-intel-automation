@@ -1,70 +1,74 @@
+import os
+import time
 import requests
-from datetime import datetime
+from dotenv import load_dotenv
 
-# --- CONFIGURAÇÕES DO TELEGRAM ---
-# (Se preferir, pode colocar suas chaves direto aqui para evitar erros de arquivo .env)
-TELEGRAM_BOT_TOKEN = "8803728250:AAEaS5Sui2Z-GHBjwBdpLz8zeUKm-kRl70U"
-TELEGRAM_CHAT_ID = "7855365372"
+# Carrega as variáveis do .env (caso esteja rodando localmente)
+load_dotenv()
 
-# Lista de serviços/sites que você quer monitorar no suporte
-# Pode colocar sites da empresa, sistemas internos ou APIs
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+# Lista de serviços que você quer monitorar
 SERVICOS_PARA_MONITORAR = [
     {"nome": "Meu GitHub", "url": "https://github.com/AmandaMRK"},
-    {"nome": "Meu TryHackMe", "url": "https://tryhackme.com/p/oliveira.limacook"},
-    {"nome": "Google", "url": "https://www.google.com"}
+    {"nome": "Google", "url": "https://www.google.com"},
+    {"nome": "Meu TryHackMe", "url": "https://tryhackme.com/p/oliveira.limacook"}
+    {"nome": "Simulador de Queda (Erro 500)", "url": "https://httpbin.org/status/500"}
 ]
 
-
-def enviar_alerta_telegram(mensagem: str):
+def enviar_alerta_telegram(mensagem):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("Erro: Variáveis do Telegram não configuradas.")
+        return
+    
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
-        "chat_id": TELEGRAM_CHAT_ID, 
-        "text": mensagem, 
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": mensagem,
         "parse_mode": "Markdown"
     }
     try:
         response = requests.post(url, json=payload, timeout=10)
-        print("Status Telegram:", response.status_code)
+        print(f"Status Telegram: {response.status_code}")
     except Exception as e:
-        print(f"[!] Erro ao enviar mensagem para o Telegram: {e}")
+        print(f"Erro ao enviar mensagem para o Telegram: {e}")
 
-if __name__ == "__main__":
-    print("--- Iniciando Monitor de Suporte (Uptime Checker) ---")
-    
+def monitorar_servicos():
+    print("\n--- Iniciando Monitor de Suporte (Uptime Checker) ---")
     for servico in SERVICOS_PARA_MONITORAR:
         nome = servico["nome"]
-        url_alvo = servico["url"]
-        
-        print(f"[*] Verificando {nome} ({url_alvo})...")
+        url = servico["url"]
         
         try:
-            # Faz a requisição para testar o site
-            resposta = requests.get(url_alvo, timeout=10)
+            resposta = requests.get(url, timeout=10)
             
-            # Se o status code for 200 até 399, consideramos OK
-            if 200 <= resposta.status_code < 400:
-                print(f"    [OK] {nome} está Online! (Status: {resposta.status_code})")
-            else:
-                # Servidor respondeu, mas com erro (ex: 500, 404)
-                msg_alerta = (
+            # Se o status for diferente de 200, consideramos instável/fora do ar
+            if resposta.status_code != 200:
+                print(f"[!] ALERTA: {nome} retornou erro {resposta.status_code}!")
+                mensagem = (
                     f"🚨 *ALERTA DE SUPORTE - SERVIÇO INSTÁVEL*\n\n"
-                    f"🖥️ **Serviço:** {nome}\n"
-                    f"🔗 **URL:** `{url_alvo}`\n"
-                    f"⚠️ **Código HTTP:** `{resposta.status_code}`\n"
-                    f"🕒 *{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*"
+                    f"💻 *Serviço:* {nome}\n"
+                    f"🔗 *URL:* {url}\n"
+                    f"⚠️ *Código HTTP:* {resposta.status_code}"
                 )
-                print(f"    [!] ALERTA: {nome} retornou erro {resposta.status_code}!")
-                enviar_alerta_telegram(msg_alerta)
+                enviar_alerta_telegram(mensagem)
+            else:
+                print(f"[OK] {nome} está Online! (Status: 200)")
                 
         except requests.exceptions.RequestException as e:
-            # Se cair aqui, o site está totalmente fora do ar (timeout, sem DNS, etc)
-            msg_alerta = (
-                f"🔥 *ALERTA CRÍTICO - SERVIÇO FORA DO AR*\n\n"
-                f"🖥️ **Serviço:** {nome}\n"
-                f"🔗 **URL:** `{url_alvo}`\n"
-                f"❌ **Erro de Conexão:** O serviço não respondeu.\n"
-                f"🕒 *{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*"
+            print(f"[X] ERRO de Conexão com {nome}: {e}")
+            mensagem = (
+                f"🚨 *ALERTA DE SUPORTE - FALHA DE CONEXÃO*\n\n"
+                f"💻 *Serviço:* {nome}\n"
+                f"🔗 *URL:* {url}\n"
+                f"❌ *Erro:* O serviço ficou inacessível."
             )
-            print(f"    [X] CRÍTICO: {nome} está inacessível!")
-            enviar_alerta_telegram(msg_alerta)
+            enviar_alerta_telegram(mensagem)
+
+# Loop infinito para rodar na nuvem 24/7 (a cada 5 minutos = 300 segundos)
+if __name__ == "__main__":
+    print("Bot de monitoramento iniciado na nuvem...")
+    while True:
+        monitorar_servicos()
+        time.sleep(300)
