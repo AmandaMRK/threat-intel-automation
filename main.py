@@ -39,7 +39,6 @@ def monitorar_servicos():
         url = servico["url"]
         
         try:
-            # Adicionamos um cabeçalho para o TryHackMe não bloquear o bot por automação
             headers = {'User-Agent': 'Mozilla/5.0'}
             resposta = requests.get(url, headers=headers, timeout=10)
             
