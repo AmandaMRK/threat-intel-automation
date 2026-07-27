@@ -13,7 +13,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 SERVICOS_PARA_MONITORAR = [
     {"nome": "Meu GitHub", "url": "https://github.com/AmandaMRK"},
     {"nome": "Google", "url": "https://www.google.com"},
-    {"nome": "Meu TryHackMe", "url": "https://tryhackme.com/p/oliveira.limacook"}
+    {"nome": "Meu TryHackMe", "url": "https://tryhackme.com/p/oliveira.limacook"},
     {"nome": "Simulador de Queda (Erro 500)", "url": "https://httpbin.org/status/500"}
 ]
 
