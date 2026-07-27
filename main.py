@@ -3,13 +3,11 @@ import time
 import requests
 from dotenv import load_dotenv
 
-# Carrega as variáveis do .env (caso esteja rodando localmente)
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Lista de serviços que você quer monitorar
 SERVICOS_PARA_MONITORAR = [
     {"nome": "Meu GitHub", "url": "https://github.com/AmandaMRK"},
     {"nome": "Google", "url": "https://www.google.com"},
@@ -43,7 +41,6 @@ def monitorar_servicos():
         try:
             resposta = requests.get(url, timeout=10)
             
-            # Se o status for diferente de 200, consideramos instável/fora do ar
             if resposta.status_code != 200:
                 print(f"[!] ALERTA: {nome} retornou erro {resposta.status_code}!")
                 mensagem = (
@@ -66,7 +63,6 @@ def monitorar_servicos():
             )
             enviar_alerta_telegram(mensagem)
 
-# Loop infinito para rodar na nuvem 24/7 (a cada 5 minutos = 300 segundos)
 if __name__ == "__main__":
     print("Bot de monitoramento iniciado na nuvem...")
     while True:
